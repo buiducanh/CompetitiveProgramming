@@ -1,0 +1,13 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+double asmall(int n, int m) {
+}
+
+int main() {
+  int t;
+  scanf("%d", tt);
+  for(int t = 0; t < tt; t++) {
+    printf("Case #%d: %0.6f", asmall(n, m));
+  }
+}
