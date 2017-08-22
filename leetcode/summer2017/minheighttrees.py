@@ -31,7 +31,7 @@ class Solution:
             q = next_leaves
 
 
-    def findMinHeightTreesWRONG(self, n, edges):
+    def findMinHeightTreesDP(self, n, edges):
         """
         :type n: int
         :type edges: List[List[int]]
@@ -42,69 +42,38 @@ class Solution:
             adj[e[0]].append(e[1])
             adj[e[1]].append(e[0])
 
-        if len(edges) < n:
-            visited = [False for i in range(n)]
-            for i in range(n):
-                if not visited[i] and not isTree(i, adj, visited):
-                    return []
-        else:
-            return []
+        height1 = [-(1 << 31) for i in range(n)]
+        height2 = list(height1)
+        dfsForSubtree(0, height1, height2, adj)
+        dp = [0 for i in range(n)]
+        dfsAdjustWithAccumulation(0, height1, height2, adj, dp, 0)
 
-        visited = [False for i in range(n)]
-        before = [0 for i in range(n)]
-        after = [0 for i in range(n)]
-        dfs(0, before, after, 0, adj)
-
-        cur = 0
-        other_offset = 0
-        max_sub = after[cur]
-        max_other = 0
-        while True:
-            if max_sub == max_other + other_offset:
-                return [cur]
-
-            visited[cur] = True
-
-            sub = max_sub
-            other = max_other
-            after_1 = after_2 = -(1 << 31)
-            max_e = None
-            for e in adj[cur]:
-                if not visited[e] and after[e] > after_2:
-                    if after[e] > after_1:
-                        after_1, after_2 = after[e], after_1
-                        max_e = e
-                    else:
-                        after_2 = after[e]
-            print(cur, max_e, max_sub, max_other + other_offset, after_1, after_2)
-            if after_2 > max_other + other_offset + 1:
-                if (abs(max_sub - max_other - other_offset) == 1 and
-                after_1 == max_sub and
-                after_2 + 1 == max_other + other_offset):
-                    return [cur, max_e]
-
-                max_other = after_2
-                other_offset = 1
-                max_sub = after_1
-            else:
-                if (abs(max_sub - max_other - other_offset) == 1 and
-                abs(after_1 - max_other - other_offset - 1) == 1):
-                    return [cur, max_e]
-                other_offset += 1
-                max_sub = after_1
-            cur = max_e
+        min_height = min(dp)
+        res = []
+        for i in range(n):
+            if dp[i] == min_height:
+                res.append(i)
+        return res
 
 
-
-def dfs(i, before, after, d, adj, p = None):
-    before[i] = d
-    max_after = d
+def dfsForSubtree(i, height1, height2, adj, p = None):
     for e in adj[i]:
-        if e == p:
-            continue
-        max_after = max(max_after, dfs(e, before, after, d + 1, adj, i))
-    after[i] = max_after - before[i]
-    return max_after
+        if e != p:
+            dfsForSubtree(e, height1, height2, adj, i)
+            subtree_max = height1[e] + 1
+            if subtree_max > height1[i]:
+                height1[i], height2[i] = subtree_max, height1[i]
+            elif subtree_max > height2[i]:
+                height2[i] = subtree_max
+    height1[i] = max(height1[i], 0)
+
+
+def dfsAdjustWithAccumulation(i, height1, height2, adj, dp, acc, p = None):
+    dp[i] = max(height1[i], acc)
+    for e in adj[i]:
+        if e != p:
+            other_path = height1[i] + 1 if height1[e] + 1 != height1[i] else height2[i] + 1
+            dfsAdjustWithAccumulation(e, height1, height2, adj, dp, max(acc + 1, other_path), i)
 
 
 def isTree(i, adj, visited, p = None):
@@ -127,4 +96,4 @@ while True:
     except Exception:
         break
 s = Solution()
-print(s.findMinHeightTrees(n, edges))
+print(s.findMinHeightTreesDP(n, edges))
